@@ -1,10 +1,10 @@
 # app/routes.py
 
-# BitPredector Version 2.3.0
+# BitPredector Version 2.4.0
 
 # Développé par LP
 
-# Date de la dernière mise à jour : 18/11/2024
+# Date de la dernière mise à jour : 01/12/2024
 
 # Description: Définition des routes API pour BitPredector
 
