@@ -1,2 +1,20 @@
+<<<<<<< HEAD
 "# BitPredector" 
 "# BitPredector" 
+=======
+# BitPredector
+
+## Version
+- Version: 2.3.0
+- Date de la dernière mise à jour : 18/11/2024
+
+## Description
+BitPredector est une plateforme de sécurité financière personnalisée axée sur l'analyse des cryptomonnaies. Elle fournit des outils d'analyse du marché, des prévisions, des alertes, et des ressources éducatives.
+
+## Installation
+
+1. Clonez le dépôt :
+   ```bash
+   git clone https://github.com/username/bitpredector.git
+   cd bitpredector
+>>>>>>> 777521d93e05d124c0ab38693e80b0fbc9f5a67c
