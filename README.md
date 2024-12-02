@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+"# BitPredector" 
+"# BitPredector" 
+=======
 # BitPredector
 
 ## Version
@@ -13,3 +17,4 @@ BitPredector est une plateforme de sécurité financière personnalisée axée s
    ```bash
    git clone https://github.com/username/bitpredector.git
    cd bitpredector
+>>>>>>> 777521d93e05d124c0ab38693e80b0fbc9f5a67c

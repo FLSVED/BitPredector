@@ -1,6 +1,9 @@
+<<<<<<< HEAD
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
+=======
+>>>>>>> 777521d93e05d124c0ab38693e80b0fbc9f5a67c
 name: Python package
 date: 2024-12-01
 version: 1.0.0
@@ -22,15 +25,32 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+<<<<<<< HEAD
+=======
+
+>>>>>>> 777521d93e05d124c0ab38693e80b0fbc9f5a67c
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+<<<<<<< HEAD
+=======
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+>>>>>>> 777521d93e05d124c0ab38693e80b0fbc9f5a67c
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+<<<<<<< HEAD
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -40,3 +60,28 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+=======
+
+    - name: Lint with flake8
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Test with pytest
+      run: |
+<<<<<<< HEAD
+        pytest
+=======
+        pytest
+
+    - name: Check Python version
+      run: python --version
+
+    - name: List installed packages
+      run: pip list
+
+    - name: Send notification on failure
+      if: failure()
+      run: echo "Build failed!" # You can replace this with an action to send a real notification
+>>>>>>> a7109b3f086117e53897fea9b0defb03fbac83bd
+>>>>>>> 777521d93e05d124c0ab38693e80b0fbc9f5a67c
