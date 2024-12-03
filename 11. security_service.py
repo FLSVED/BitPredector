@@ -1,11 +1,8 @@
 # app/services/security_service.py
 
-# BitPredector Version 1.0.0
-
+# BitPredector Version 2.0.0
 # Développé par LP
-
-# Date de la dernière mise à jour : 01/12/2024
-
+# Date de la dernière mise à jour : 03/12/2024
 # Description: Service pour la sécurité des actifs et détection d'anomalies
 
 from ..models import User
