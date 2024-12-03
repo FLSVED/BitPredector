@@ -1,199 +1,217 @@
-<<<<<<< HEAD
-# app/services/sentiment_service.py
 
-# BitPredector Version 1.0.0
+Module: sentiment_service
 
-# Développé par LP
+Version: 2.0.0
+Date de la dernière mise à jour: 03/12/2024
 
-# Date de la dernière mise à jour : 18/11/2024
+Description:
+Ce module fournit une analyse de sentiment pour les marchés de la cryptomonnaie en utilisant plusieurs sources de données, y compris Twitter, Reddit et des articles d'actualités. Les utilisateurs peuvent activer ou désactiver les sources selon leurs préférences.
 
-# Description: Service pour l'analyse sentimentale des cryptomonnaies
+Classes:
+- DataSource: Classe de base pour toutes les sources de données.
+- TwitterSource: Source de données pour Twitter.
+- RedditSource: Source de données pour Reddit.
+- NewsSource: Source de données pour les articles d'actualités.
+- SentimentAnalyzer: Classe pour analyser le sentiment des textes collectés à partir des sources activées.
 
-import tweepy
-import requests
-from textblob import TextBlob
+Fonctions:
+- main: Fonction principale pour exécuter l'analyseur de sentiment.
+
+Utilisation:
+1. Configurez les clés API requises dans les variables d'environnement.
+2. Activez les sources de données souhaitées.
+3. Exécutez la fonction `main` pour obtenir le ratio de confiance pour un mot-clé donné.
+
+Exemple:
+    asyncio.run(main())
+"""
+
+import os
 import logging
-import praw  # Pour accéder à Reddit
-
-class SentimentService:
-
-    def __init__(self, twitter_api_key, twitter_api_secret_key, twitter_access_token, twitter_access_token_secret, reddit_client_id, reddit_client_secret, reddit_user_agent, news_api_key):
-        # Configuration de l'API Twitter
-        self.twitter_auth = tweepy.OAuthHandler(twitter_api_key, twitter_api_secret_key)
-        self.twitter_auth.set_access_token(twitter_access_token, twitter_access_token_secret)
-        self.twitter_api = tweepy.API(self.twitter_auth)
-
-        # Configuration de l'API Reddit
-        self.reddit = praw.Reddit(client_id=reddit_client_id, client_secret=reddit_client_secret, user_agent=reddit_user_agent)
-
-        # Clé API pour NewsAPI
-        self.news_api_key = news_api_key
-
-        logging.basicConfig(level=logging.INFO)
-
-    def get_tweets(self, keyword, count=100):
-        """Récupère les tweets contenant le mot-clé spécifié."""
-        tweets = []
-        try:
-            fetched_tweets = self.twitter_api.search(q=keyword, count=count, lang='en', tweet_mode='extended')
-            for tweet in fetched_tweets:
-                tweets.append(tweet.full_text)
-            logging.info(f"{len(tweets)} tweets récupérés pour le mot-clé: {keyword}")
-            return tweets
-        except tweepy.TweepError as e:
-            logging.error(f"Erreur lors de la récupération des tweets : {e}")
-            return []
-
-    def get_reddit_comments(self, keyword, count=100):
-        """Récupère les commentaires de Reddit contenant le mot-clé spécifié."""
-        comments = []
-        try:
-            subreddit = self.reddit.subreddit('cryptocurrency')
-            for comment in subreddit.comments(limit=count):
-                if keyword.lower() in comment.body.lower():
-                    comments.append(comment.body)
-            logging.info(f"{len(comments)} commentaires récupérés de Reddit pour le mot-clé: {keyword}")
-            return comments
-        except Exception as e:
-            logging.error(f"Erreur lors de la récupération des commentaires Reddit : {e}")
-            return []
-
-    def get_news_articles(self, keyword):
-        """Récupère des articles d'actualités contenant le mot-clé spécifié."""
-        articles = []
-        url = f"https://newsapi.org/v2/everything?q={keyword}&apiKey={self.news_api_key}"
-        try:
-            response = requests.get(url)
-            if response.status_code == 200:
-                data = response.json()
-                for article in data['articles']:
-                    articles.append(article['title'] + " " + article['description'])
-                logging.info(f"{len(articles)} articles récupérés pour le mot-clé: {keyword}")
-            return articles
-        except Exception as e:
-            logging.error(f"Erreur lors de la récupération des articles d'actualités : {e}")
-            return []
-
-    def analyze_sentiment(self, texts):
-        """Analyse le sentiment des textes récupérés."""
-        sentiment_results = []
-        for text in texts:
-            analysis = TextBlob(text)
-            sentiment_results.append({
-                'text': text,
-                'polarity': analysis.sentiment.polarity,
-                'subjectivity': analysis.sentiment.subjectivity
-            })
-        return sentiment_results
-
-    def analyze_crypto_sentiment(self, crypto_name, tweet_count=100, reddit_count=100):
-        """Récupère et analyse le sentiment des tweets et commentaires concernant une cryptomonnaie."""
-        logging.info(f"Analyse du sentiment pour {crypto_name}...")
-        tweets = self.get_tweets(crypto_name, tweet_count)
-        reddit_comments = self.get_reddit_comments(crypto_name, reddit_count)
-        all_texts = tweets + reddit_comments
-        if not all_texts:
-            logging.warning("Aucun texte récupéré. Analyse impossible.")
-            return []
-        sentiment_results = self.analyze_sentiment(all_texts)
-        return sentiment_results
-=======
-# app/services/sentiment_service.py
-
-# BitPredector Version 1.0.0
-
-# Développé par LP
-
-# Date de la dernière mise à jour : 18/11/2024
-
-# Description: Service pour l'analyse sentimentale des cryptomonnaies
-
-import tweepy
-import requests
+import asyncio
+import aiohttp
 from textblob import TextBlob
-import logging
-import praw  # Pour accéder à Reddit
+import tweepy
+import praw
 
-class SentimentService:
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
-    def __init__(self, twitter_api_key, twitter_api_secret_key, twitter_access_token, twitter_access_token_secret, reddit_client_id, reddit_client_secret, reddit_user_agent, news_api_key):
-        # Configuration de l'API Twitter
-        self.twitter_auth = tweepy.OAuthHandler(twitter_api_key, twitter_api_secret_key)
-        self.twitter_auth.set_access_token(twitter_access_token, twitter_access_token_secret)
-        self.twitter_api = tweepy.API(self.twitter_auth)
+class DataSource:
+    """Classe de base pour toutes les sources de données."""
+    def __init__(self, name, enabled=False):
+        self.name = name
+        self.enabled = enabled
+    
+    async def fetch_data(self, keyword):
+        """Cette méthode doit être implémentée par chaque source spécifique."""
+        raise NotImplementedError("fetch_data doit être implémentée par les sous-classes")
 
-        # Configuration de l'API Reddit
-        self.reddit = praw.Reddit(client_id=reddit_client_id, client_secret=reddit_client_secret, user_agent=reddit_user_agent)
+class TwitterSource(DataSource):
+    """Source de données pour Twitter."""
+    def __init__(self, api, name="Twitter", enabled=False):
+        super().__init__(name, enabled)
+        self.api = api
 
-        # Clé API pour NewsAPI
-        self.news_api_key = news_api_key
-
-        logging.basicConfig(level=logging.INFO)
-
-    def get_tweets(self, keyword, count=100):
-        """Récupère les tweets contenant le mot-clé spécifié."""
-        tweets = []
+    async def fetch_data(self, keyword):
         try:
-            fetched_tweets = self.twitter_api.search(q=keyword, count=count, lang='en', tweet_mode='extended')
-            for tweet in fetched_tweets:
-                tweets.append(tweet.full_text)
-            logging.info(f"{len(tweets)} tweets récupérés pour le mot-clé: {keyword}")
-            return tweets
+            logging.info(f"Fetching tweets for {keyword}")
+            fetched_tweets = self.api.search(q=keyword, count=100, lang='en', tweet_mode='extended')
+            return [tweet.full_text for tweet in fetched_tweets]
         except tweepy.TweepError as e:
-            logging.error(f"Erreur lors de la récupération des tweets : {e}")
+            logging.error(f"Error fetching tweets: {e}")
             return []
 
-    def get_reddit_comments(self, keyword, count=100):
-        """Récupère les commentaires de Reddit contenant le mot-clé spécifié."""
-        comments = []
+class RedditSource(DataSource):
+    """Source de données pour Reddit."""
+    def __init__(self, reddit_client, name="Reddit", enabled=False):
+        super().__init__(name, enabled)
+        self.reddit_client = reddit_client
+
+    async def fetch_data(self, keyword):
         try:
-            subreddit = self.reddit.subreddit('cryptocurrency')
-            for comment in subreddit.comments(limit=count):
-                if keyword.lower() in comment.body.lower():
-                    comments.append(comment.body)
-            logging.info(f"{len(comments)} commentaires récupérés de Reddit pour le mot-clé: {keyword}")
-            return comments
+            logging.info(f"Fetching Reddit comments for {keyword}")
+            subreddit = self.reddit_client.subreddit('cryptocurrency')
+            return [comment.body for comment in subreddit.comments(limit=100) if keyword.lower() in comment.body.lower()]
         except Exception as e:
-            logging.error(f"Erreur lors de la récupération des commentaires Reddit : {e}")
+            logging.error(f"Error fetching Reddit comments: {e}")
             return []
 
-    def get_news_articles(self, keyword):
-        """Récupère des articles d'actualités contenant le mot-clé spécifié."""
-        articles = []
-        url = f"https://newsapi.org/v2/everything?q={keyword}&apiKey={self.news_api_key}"
+class NewsSource(DataSource):
+    """Source de données pour les articles d'actualités."""
+    def __init__(self, api_key, name="News", enabled=False):
+        super().__init__(name, enabled)
+        self.api_key = api_key
+
+    async def fetch_data(self, keyword):
+        url = f"https://newsapi.org/v2/everything?q={keyword}&apiKey={self.api_key}"
         try:
-            response = requests.get(url)
-            if response.status_code == 200:
-                data = response.json()
-                for article in data['articles']:
-                    articles.append(article['title'] + " " + article['description'])
-                logging.info(f"{len(articles)} articles récupérés pour le mot-clé: {keyword}")
-            return articles
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return [article['title'] + " " + article['description'] for article in data['articles']]
+                    else:
+                        logging.error(f"Error fetching news articles: {response.status}")
+                        return []
         except Exception as e:
-            logging.error(f"Erreur lors de la récupération des articles d'actualités : {e}")
+            logging.error(f"Error fetching news articles: {e}")
             return []
 
-    def analyze_sentiment(self, texts):
-        """Analyse le sentiment des textes récupérés."""
-        sentiment_results = []
-        for text in texts:
-            analysis = TextBlob(text)
-            sentiment_results.append({
-                'text': text,
-                'polarity': analysis.sentiment.polarity,
-                'subjectivity': analysis.sentiment.subjectivity
-            })
-        return sentiment_results
+class SentimentAnalyzer:
+    """Classe pour analyser le sentiment des textes collectés."""
+    def __init__(self, sources):
+        self.sources = sources
 
-    def analyze_crypto_sentiment(self, crypto_name, tweet_count=100, reddit_count=100):
-        """Récupère et analyse le sentiment des tweets et commentaires concernant une cryptomonnaie."""
-        logging.info(f"Analyse du sentiment pour {crypto_name}...")
-        tweets = self.get_tweets(crypto_name, tweet_count)
-        reddit_comments = self.get_reddit_comments(crypto_name, reddit_count)
-        all_texts = tweets + reddit_comments
-        if not all_texts:
-            logging.warning("Aucun texte récupéré. Analyse impossible.")
-            return []
-        sentiment_results = self.analyze_sentiment(all_texts)
-        return sentiment_results
->>>>>>> 777521d93e05d124c0ab38693e80b0fbc9f5a67c
+    async def analyze(self, keyword):
+        results = []
+        for source in self.sources:
+            if source.enabled:
+                data = await source.fetch_data(keyword)
+                sentiments = [self.analyze_sentiment(text) for text in data]
+                results.extend(sentiments)
+        return self.calculate_confidence(results)
+
+    @staticmethod
+    def analyze_sentiment(text):
+        analysis = TextBlob(text)
+        return analysis.sentiment.polarity
+
+    @staticmethod
+    def calculate_confidence(sentiments):
+        if not sentiments:
+            return 0
+        positive = len([s for s in sentiments if s > 0])
+        negative = len([s for s in sentiments if s < 0])
+        return (positive - negative) / len(sentiments)
+
+async def main():
+    """Fonction principale pour exécuter l'analyseur de sentiment."""
+    # Initialize API clients
+    twitter_api_key = os.getenv("TWITTER_API_KEY")
+    twitter_api_secret_key = os.getenv("TWITTER_API_SECRET_KEY")
+    twitter_access_token = os.getenv("TWITTER_ACCESS_TOKEN")
+    twitter_access_token_secret = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
+    twitter_auth = tweepy.OAuthHandler(twitter_api_key, twitter_api_secret_key)
+    twitter_auth.set_access_token(twitter_access_token, twitter_access_token_secret)
+    twitter_api = tweepy.API(twitter_auth)
+
+    reddit_client_id = os.getenv("REDDIT_CLIENT_ID")
+    reddit_client_secret = os.getenv("REDDIT_CLIENT_SECRET")
+    reddit_user_agent = os.getenv("REDDIT_USER_AGENT")
+    reddit = praw.Reddit(client_id=reddit_client_id, client_secret=reddit_client_secret, user_agent=reddit_user_agent)
+
+    news_api_key = os.getenv("NEWS_API_KEY")
+
+    # Initialize sources with user preference (in a real-world scenario, these could be set via a UI)
+    sources = [
+        TwitterSource(twitter_api, enabled=True),
+        RedditSource(reddit, enabled=True),
+        NewsSource(news_api_key, enabled=True),
+    ]
+
+    analyzer = SentimentAnalyzer(sources)
+    confidence = await analyzer.analyze("Bitcoin")
+    print(f"Confidence ratio for Bitcoin: {confidence:.2f}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### Tests Unitaires
+
+Voici les tests unitaires associés pour s'assurer que chaque composant fonctionne correctement :
+
+```python
+import unittest
+from unittest.mock import AsyncMock, patch
+from sentiment_service import TwitterSource, RedditSource, NewsSource, SentimentAnalyzer
+
+class TestSentimentService(unittest.TestCase):
+
+    @patch('sentiment_service.tweepy.API')
+    def test_twitter_source(self, MockTwitterAPI):
+        # Mocking Twitter API
+        mock_api = MockTwitterAPI.return_value
+        mock_api.search.return_value = [AsyncMock(full_text="Positive tweet about Bitcoin")]
+
+        twitter_source = TwitterSource(mock_api, enabled=True)
+        data = asyncio.run(twitter_source.fetch_data("Bitcoin"))
+        self.assertEqual(len(data), 1)
+        self.assertIn("Positive tweet about Bitcoin", data)
+
+    @patch('sentiment_service.praw.Reddit')
+    def test_reddit_source(self, MockReddit):
+        # Mocking Reddit API
+        mock_reddit = MockReddit.return_value
+        mock_comments = [AsyncMock(body="Positive Reddit comment about Bitcoin")]
+        mock_subreddit = AsyncMock()
+        mock_subreddit.comments.return_value = mock_comments
+        mock_reddit.subreddit.return_value = mock_subreddit
+
+        reddit_source = RedditSource(mock_reddit, enabled=True)
+        data = asyncio.run(reddit_source.fetch_data("Bitcoin"))
+        self.assertEqual(len(data), 1)
+        self.assertIn("Positive Reddit comment about Bitcoin", data)
+
+    @patch('sentiment_service.aiohttp.ClientSession')
+    def test_news_source(self, MockClientSession):
+        # Mocking News API
+        mock_session = MockClientSession.return_value
+        mock_get = mock_session.get.return_value.__aenter__.return_value
+        mock_get.status = 200
+        mock_get.json.return_value = {
+            'articles': [{'title': 'Positive news about Bitcoin', 'description': 'Bitcoin is rising'}]
+        }
+
+        news_source = NewsSource("fake_api_key", enabled=True)
+        data = asyncio.run(news_source.fetch_data("Bitcoin"))
+        self.assertEqual(len(data), 1)
+        self.assertIn("Positive news about Bitcoin Bitcoin is rising", data)
+
+    def test_sentiment_analyzer(self):
+        sources = [
+            TwitterSource(None, enabled=False),
+            RedditSource(None, enabled=False),
+            NewsSource(None, enabled=False)
+        ]
