@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # app/services/market_service.py
 
 # BitPredector Version 2.3.0
@@ -142,4 +142,4 @@ class MarketService:
             raise Exception("Le fichier de données historiques est introuvable.")
         except Exception as e:
             raise Exception(f"Erreur lors de la récupération des données : {e}")
->>>>>>> 777521d93e05d124c0ab38693e80b0fbc9f5a67c
+
