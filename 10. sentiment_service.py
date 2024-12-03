@@ -1,11 +1,11 @@
-
 Module: sentiment_service
-
-Version: 2.0.0
+Version: 2.2.0
 Date de la dernière mise à jour: 03/12/2024
 
 Description:
-Ce module fournit une analyse de sentiment pour les marchés de la cryptomonnaie en utilisant plusieurs sources de données, y compris Twitter, Reddit et des articles d'actualités. Les utilisateurs peuvent activer ou désactiver les sources selon leurs préférences.
+Ce module fournit une analyse de sentiment pour les marchés de la cryptomonnaie en utilisant plusieurs sources de données,
+y compris Twitter, Reddit, et des articles d'actualités. Il utilise des techniques avancées de NLP et met en œuvre
+des mécanismes de mise en cache pour optimiser les performances.
 
 Classes:
 - DataSource: Classe de base pour toutes les sources de données.
@@ -30,19 +30,24 @@ import os
 import logging
 import asyncio
 import aiohttp
-from textblob import TextBlob
 import tweepy
 import praw
+from transformers import pipeline
+from cachetools import TTLCache, cached
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Cache configuration
+cache = TTLCache(maxsize=100, ttl=300)
 
 class DataSource:
     """Classe de base pour toutes les sources de données."""
     def __init__(self, name, enabled=False):
         self.name = name
         self.enabled = enabled
-    
+
     async def fetch_data(self, keyword):
         """Cette méthode doit être implémentée par chaque source spécifique."""
         raise NotImplementedError("fetch_data doit être implémentée par les sous-classes")
@@ -53,13 +58,17 @@ class TwitterSource(DataSource):
         super().__init__(name, enabled)
         self.api = api
 
+    @cached(cache)
     async def fetch_data(self, keyword):
+        if not self.enabled:
+            logger.info(f"Source {self.name} désactivée.")
+            return []
         try:
-            logging.info(f"Fetching tweets for {keyword}")
+            logger.info(f"Fetching tweets for {keyword}")
             fetched_tweets = self.api.search(q=keyword, count=100, lang='en', tweet_mode='extended')
             return [tweet.full_text for tweet in fetched_tweets]
         except tweepy.TweepError as e:
-            logging.error(f"Error fetching tweets: {e}")
+            logger.error(f"Error fetching tweets: {e}. Check API keys and network connectivity.")
             return []
 
 class RedditSource(DataSource):
@@ -68,13 +77,17 @@ class RedditSource(DataSource):
         super().__init__(name, enabled)
         self.reddit_client = reddit_client
 
+    @cached(cache)
     async def fetch_data(self, keyword):
+        if not self.enabled:
+            logger.info(f"Source {self.name} désactivée.")
+            return []
         try:
-            logging.info(f"Fetching Reddit comments for {keyword}")
+            logger.info(f"Fetching Reddit comments for {keyword}")
             subreddit = self.reddit_client.subreddit('cryptocurrency')
             return [comment.body for comment in subreddit.comments(limit=100) if keyword.lower() in comment.body.lower()]
         except Exception as e:
-            logging.error(f"Error fetching Reddit comments: {e}")
+            logger.error(f"Error fetching Reddit comments: {e}. Ensure Reddit API credentials are valid.")
             return []
 
 class NewsSource(DataSource):
@@ -83,25 +96,30 @@ class NewsSource(DataSource):
         super().__init__(name, enabled)
         self.api_key = api_key
 
+    @cached(cache)
     async def fetch_data(self, keyword):
+        if not self.enabled:
+            logger.info(f"Source {self.name} désactivée.")
+            return []
         url = f"https://newsapi.org/v2/everything?q={keyword}&apiKey={self.api_key}"
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as response:
                     if response.status == 200:
                         data = await response.json()
-                        return [article['title'] + " " + article['description'] for article in data['articles']]
+                        return [f"{article['title']} {article['description']}" for article in data['articles']]
                     else:
-                        logging.error(f"Error fetching news articles: {response.status}")
+                        logger.error(f"Error fetching news articles: {response.status}. Verify API key and query parameters.")
                         return []
         except Exception as e:
-            logging.error(f"Error fetching news articles: {e}")
+            logger.error(f"Error fetching news articles: {e}. Check network connectivity and API availability.")
             return []
 
 class SentimentAnalyzer:
     """Classe pour analyser le sentiment des textes collectés."""
     def __init__(self, sources):
         self.sources = sources
+        self.sentiment_pipeline = pipeline("sentiment-analysis")
 
     async def analyze(self, keyword):
         results = []
@@ -112,10 +130,13 @@ class SentimentAnalyzer:
                 results.extend(sentiments)
         return self.calculate_confidence(results)
 
-    @staticmethod
-    def analyze_sentiment(text):
-        analysis = TextBlob(text)
-        return analysis.sentiment.polarity
+    def analyze_sentiment(self, text):
+        try:
+            analysis = self.sentiment_pipeline(text)
+            return 1 if analysis[0]['label'] == 'POSITIVE' else -1
+        except Exception as e:
+            logger.error(f"Error analyzing sentiment: {e}.")
+            return 0
 
     @staticmethod
     def calculate_confidence(sentiments):
@@ -157,4 +178,3 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
-
