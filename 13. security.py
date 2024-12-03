@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # app/utils/security.py
 
 # BitPredector Version 2.1.0
@@ -70,4 +70,4 @@ class SecurityUtils:
         """Vérifie un code 2FA."""
         totp = pyotp.TOTP(secret)
         return totp.verify(code)
->>>>>>> 777521d93e05d124c0ab38693e80b0fbc9f5a67c
+
