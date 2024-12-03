@@ -1,10 +1,10 @@
-```yaml
-# Workflow for building, testing, and deploying a Python web application
-# This workflow includes steps for dependency management, linting, testing, and deployment.
 
-name: Python WebApp CI/CD
+```yaml
+# Workflow for building, testing, and deploying a full-stack Python and React web application
+
+name: Full-Stack WebApp CI/CD
 date: 2024-12-01
-version: 2.2.0
+version: 2.3.0
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  backend:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -60,27 +60,14 @@ jobs:
     - name: List installed packages
       run: pip list
 
-    # Optional deployment step - customize for your deployment service
+    # Optional deployment step for backend
     # Uncomment and configure for Heroku, AWS, or another platform
-    # - name: Deploy to Heroku
+    # - name: Deploy Backend to Heroku
     #   uses: akhileshns/heroku-deploy@v3.12.12
     #   with:
     #     heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-    #     heroku_app_name: "your-heroku-app-name"
+    #     heroku_app_name: "your-backend-heroku-app-name"
     #     heroku_email: "your-email@example.com"
-
-    - name: Send notification on failure
-      if: failure()
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.example.com
-        server_port: 587
-        username: ${{ secrets.SMTP_USERNAME }}
-        password: ${{ secrets.SMTP_PASSWORD }}
-        subject: "Build Failed!"
-        body: "The latest build failed. Please check the logs for details."
-        to: "dev-team@example.com"
-        from: "ci-cd-notifications@example.com"
 
   frontend:
     runs-on: ubuntu-latest
@@ -104,9 +91,18 @@ jobs:
     - name: Install Node.js dependencies
       run: npm ci
 
+    - name: Lint frontend code
+      run: npm run lint
+
     - name: Run frontend tests
       run: npm test
 
     - name: Build frontend
       run: npm run build
+
+    # Optional deployment step for frontend
+    # Uncomment and configure for deployment (e.g., to Netlify, Vercel, etc.)
+    # - name: Deploy Frontend
+    #   run: <command to deploy frontend>
+
 ```
