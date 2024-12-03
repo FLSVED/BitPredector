@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 SECRET_KEY=your_secret_key
 DATABASE_URL=sqlite:///site.db
 MAIL_SERVER=smtp.gmail.com
