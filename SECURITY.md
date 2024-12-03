@@ -2,8 +2,7 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+We provide security updates for the following versions of our project. Please ensure you are using a supported version to receive the latest security updates.
 
 | Version | Supported          |
 | ------- | ------------------ |
@@ -14,8 +13,23 @@ currently being supported with security updates.
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+If you discover a security vulnerability, please report it to us immediately. We take all security reports seriously and will address them promptly.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+### How to Report
+1. **Email**: Send an email to [security@bitpredector.com](mailto:security@bitpredector.com) with details of the vulnerability.
+2. **GitHub Issues**: Create a private issue in our [GitHub repository](https://github.com/FLSVED/BitPredector/issues).
+
+### Information to Include
+- A detailed description of the vulnerability.
+- Steps to reproduce the issue.
+- Any potential impact or exploit scenarios.
+
+### Response Process
+- **Acknowledgment**: We will acknowledge receipt of your report within 48 hours.
+- **Investigation**: Our security team will investigate the issue and determine the impact.
+- **Resolution**: We aim to resolve confirmed vulnerabilities within 7 days, with regular updates on the progress.
+
+### Disclosure
+- We follow a responsible disclosure process. Once the vulnerability is resolved, we will notify all affected users and provide them with the necessary updates or patches.
+
+Thank you for helping us keep our project secure.
